@@ -1,0 +1,59 @@
+plugins {
+	id 'com.unascribed.nilgradle' version '1.4.0'
+}
+
+// You can change this to be higher if you like. NilLoader itself is compiled
+// for Java 8 for compatibility with older versions.
+sourceCompatibility = 8
+targetCompatibility = 8
+
+group = 'nl.theepicblock'
+archivesBaseName = 'NilExample'
+version = '1.0'
+
+repositories {
+	maven {
+		// NilLoader and NilGradle are published here
+		url 'https://repo.sleeping.town'
+		content {
+			includeGroup 'com.unascribed'
+		}
+	}
+	maven {
+		url 'https://repo.spongepowered.org/repository/maven-public/'
+		content {
+			includeGroup 'org.spongepowered'
+		}
+	}
+}
+
+nil {
+	id "testinjector"
+	// Set this to false for a smaller JAR that can't be run as a standalone Java agent
+	standalone true
+}
+
+dependencies {
+	loader 'com.unascribed:nilloader:1.2.2'
+
+	// Any version available in the vanilla launcher can be put here, or...
+	game nil.minecraft('1.20.1', 'server')
+	// ...you can use any version that's been archived in the IA by OmniArchive
+	//game nil.minecraftArchive('alpha', 'a1.1.1')
+	// Or, you can use something that isn't Minecraft with a normal Gradle dependency.
+
+	// You can specify additional dependencies using the "mod" configuration to
+	// add things that will be remapped:
+	// mod 'net.minecraftforge:forge:1.4.7-6.6.2.534:universal@zip
+
+	// If you have a dependency named after your via mappings (e.g. SRG/Intermediary)
+	// rather than raw obf names, then you can use modVia:
+	// modVia 'dev.emi:emi:0.3.3+1.4'
+
+	// Normal libraries can be added with the usual "implementation" configuration.
+	implementation("org.spongepowered:mixin:0.8.2")
+}
+
+mappings {
+	// No mappings, we're doing modloader independent stuff here
+}
