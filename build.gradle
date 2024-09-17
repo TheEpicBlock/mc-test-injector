@@ -8,8 +8,8 @@ sourceCompatibility = 8
 targetCompatibility = 8
 
 group = 'nl.theepicblock'
-archivesBaseName = 'NilExample'
-version = '1.0'
+archivesBaseName = 'McTestInjector'
+version = '0.0.1'
 
 repositories {
 	maven {
