@@ -2,6 +2,7 @@ package nl.theepicblock.mctestinjector;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -19,17 +20,7 @@ public class LateMappingsDetector {
     @SuppressWarnings("unchecked")
     public LateMappingsDetector() {
         this.nilmodid = NilAgent.getActiveMod();
-
-        try {
-            Class<?> clazz = NilAgent.class;
-            Field mappingsField = clazz.getDeclaredField("modMappings");
-            mappingsField.setAccessible(true);
-            Map<String, Map<String, MappingSet>> allMappings = (Map<String, Map<String, MappingSet>>)mappingsField.get(null);
-
-            this.mappings = allMappings.get(this.nilmodid);
-        } catch (Exception e) {
-            TestPremain.log.warn("Failed to save mappings from being cleared", e);
-        }
+        this.mappings = NilHacks.getAllMappingsForMod(this.nilmodid);
     }
 
     public MappingSet detect(ClassNode clazz) {
@@ -50,12 +41,13 @@ public class LateMappingsDetector {
 				TestPremain.log.info("Late-detected srg v2 as the runtime mapping");
                 mapping = TestPremain.SRGV2;
 			}
-            if (mapping != null) {
-                hackSetMappings(mapping);
-            }
         }
             
         return mappings.get(mapping);
+    }
+
+    public Iterable<MappingSet> getAllMappings() {
+        return this.mappings.values();
     }
 
 	public static boolean anyMatch(List<String> names, String regex) {
@@ -67,32 +59,4 @@ public class LateMappingsDetector {
 		}
 		return false;
 	}
-    
-    /**
-     * This won't do anything for the bulk of Nil's remapping, but it 
-     * helps for {@link MappingsDetectingTransformer}s
-     */
-    @SuppressWarnings("unchecked")
-    private void hackSetMappings(String newMappingName) {
-        this.mapping = newMappingName;
-        // String current = NilAgent.getActiveMappingId(nilmodid);
-        // if (Objects.equals(current, newMappingName)) {
-        //     TestPremain.log.debug("Already this mapping, hack init not needed");
-        // }
-
-        // try {
-        //     Class<?> clazz = NilAgent.class;
-        //     Field mappingsIdField = clazz.getDeclaredField("activeModMappings");
-        //     mappingsIdField.setAccessible(true);
-        //     Field mappingsField = clazz.getDeclaredField("modMappings");
-        //     mappingsField.setAccessible(true);
-
-        //     Map<String, String> mappingsIds = (Map<String, String>)mappingsIdField.get(null);
-        //     Map<String, Map<String, MappingSet>> allMappings = (Map<String, Map<String, MappingSet>>)mappingsField.get(null);
-        //     allMappings.put(nilmodid, this.mappings);
-        //     mappingsIds.put(nilmodid, newMappingName);
-        // } catch (Exception e) {
-        //     TestPremain.log.warn("Failed to hack in new mappings", e);;
-        // }
-    }
 }

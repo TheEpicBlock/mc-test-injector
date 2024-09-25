@@ -24,21 +24,11 @@ public class TestPremain implements Runnable {
 	public void run() {
 		log.info("Initializing mc-test-injector");
 
-		if (exists("net.fabricmc.loader.api.FabricLoader")) {
-			log.info("Floader exists, assuming intermediary");
-			ModRemapper.setTargetMapping(INTERMEDIARY);
-		}
-		
+		// prevents nilloader from trying to remap
+		// (it can't because of java versions)
+		ModRemapper.setTargetMapping("bogus");
+
 		LateMappingsDetector detector = new LateMappingsDetector();
 		ClassTransformer.register(new AsmTransformerWrapper(new TestInjectionTransformer(detector)));
-	}
-
-	private static boolean exists(String clazz) {
-		try {
-			Class.forName(clazz, false, TestPremain.class.getClassLoader());
-			return true;
-		} catch (Exception ignored) {
-			return false;
-		}
 	}
 }

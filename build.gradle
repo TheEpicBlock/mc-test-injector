@@ -4,8 +4,8 @@ plugins {
 
 // You can change this to be higher if you like. NilLoader itself is compiled
 // for Java 8 for compatibility with older versions.
-sourceCompatibility = 8
-targetCompatibility = 8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 group = 'nl.theepicblock'
 archivesBaseName = 'McTestInjector'
