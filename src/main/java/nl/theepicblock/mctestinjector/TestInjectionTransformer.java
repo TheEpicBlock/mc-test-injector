@@ -1,7 +1,5 @@
 package nl.theepicblock.mctestinjector;
 
-import org.spongepowered.asm.mixin.MixinEnvironment;
-
 import nilloader.api.lib.mini.PatchContext;
 import nilloader.api.lib.mini.annotation.Patch;
 
@@ -23,8 +21,9 @@ public class TestInjectionTransformer extends MiniMiniTransformer {
 	public static class Hooks {
 		public static void runTestsAndExit() {
 			TestPremain.log.info("Running mixin audit");
-			MixinEnvironment.getCurrentEnvironment().audit();
-			TestPremain.log.info("Everything seems to be fine! Exiting minecraft");
+			if (true) throw new RuntimeException("e");
+			TestRunner.runTests();
+			TestPremain.log.info("Everything seems to be fine! Forcibly halting the jvm.");
 			Runtime.getRuntime().halt(0);
 		}
 	}
