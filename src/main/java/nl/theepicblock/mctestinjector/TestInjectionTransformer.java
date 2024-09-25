@@ -2,12 +2,15 @@ package nl.theepicblock.mctestinjector;
 
 import org.spongepowered.asm.mixin.MixinEnvironment;
 
-import nilloader.api.lib.mini.MiniTransformer;
 import nilloader.api.lib.mini.PatchContext;
 import nilloader.api.lib.mini.annotation.Patch;
 
 @Patch.Class("net.minecraft.server.MinecraftServer")
-public class TestInjectionTransformer extends MiniTransformer {
+public class TestInjectionTransformer extends MappingsDetectingTransformer {
+	public TestInjectionTransformer(LateMappingsDetector detector) {
+		super(detector);
+	}
+
 	@Patch.Method("initServer()Z")
 	public void patchServerStart(PatchContext ctx) {
 		ctx.jumpToStart();
