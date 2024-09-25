@@ -37,7 +37,10 @@ public class LateMappingsDetector {
 			} else if (anyMatch(methodNames, "method_\\d+")) {
 				TestPremain.log.info("Late-detected intermediary as the runtime mapping");
                 mapping = TestPremain.INTERMEDIARY;
-			} else if (anyMatch(methodNames, "m_\\d+_")) {
+			} else if (anyMatch(methodNames, "m_[a-z]{8}")) {
+                TestPremain.log.info("Late-detected hashed as the runtime mapping");
+                mapping = TestPremain.HASHED;
+            } else if (anyMatch(methodNames, "m_\\d+_")) {
 				TestPremain.log.info("Late-detected srg v2 as the runtime mapping");
                 mapping = TestPremain.SRGV2;
 			}

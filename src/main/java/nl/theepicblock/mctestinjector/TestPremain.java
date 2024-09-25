@@ -17,6 +17,7 @@ public class TestPremain implements Runnable {
 
 	// Matches mappings.json
 	public static final String INTERMEDIARY = "net.fabricmc.intermediary-1.20.1";
+	public static final String HASHED = "org.quiltmc.hashed-1.20.1";
 	public static final String MOJMAP = "com.mojang.launcher.server-0b4dba049482496c507b2387a73a913230ebbd76";
 	public static final String SRGV2 = "de.oceanlabs.mcp.mcp_config-1.20.1";
 	
