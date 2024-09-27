@@ -28,9 +28,11 @@ public class AsmTransformerWrapper implements ClassTransformer {
 
 		int originalVersion = (originalData[6] << 8) | originalData[7];
 
-		// Make this class file appear like an earlier version
-		originalData[6] = (byte)(maxAsmVersion() >> 8);
-		originalData[7] = (byte)(maxAsmVersion() & 0xFF);
+		if (originalVersion > maxAsmVersion()) {
+			// Make this class file appear like an earlier version
+			originalData[6] = (byte)(maxAsmVersion() >> 8);
+			originalData[7] = (byte)(maxAsmVersion() & 0xFF);
+		}
         
         // Regular asm reading code
 		ClassReader reader = new ClassReader(originalData);
@@ -47,9 +49,11 @@ public class AsmTransformerWrapper implements ClassTransformer {
 		clazz.accept(writer);
 		byte[] result = writer.toByteArray();
 
-        // Undo our hack
-		originalData[6] = (byte)(originalVersion >> 8);
-		originalData[7] = (byte)(originalVersion & 0xFF);
+		if (originalVersion > maxAsmVersion()) {
+			// Undo our hack
+			originalData[6] = (byte)(originalVersion >> 8);
+			originalData[7] = (byte)(originalVersion & 0xFF);
+		}
         return result;
     }
 	
