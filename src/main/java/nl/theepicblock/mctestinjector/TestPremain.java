@@ -8,10 +8,8 @@ import nl.theepicblock.mctestinjector.support.LateMappingsDetector;
 
 // All entrypoint classes must implement Runnable.
 public class TestPremain implements Runnable {
-
-	// NilLoader comes with a logger abstraction that Does The Right Thing depending on the environment.
-	// You should always use it.
-	public static final NilLogger log = NilLogger.get("mc-test-injector");
+	public static final String NAME = "mc-test-injector";
+	public static NilLogger log = NilLogger.get(NAME);
 
 	// Matches mappings.json
 	public static final String INTERMEDIARY = "net.fabricmc.intermediary-1.20.1";

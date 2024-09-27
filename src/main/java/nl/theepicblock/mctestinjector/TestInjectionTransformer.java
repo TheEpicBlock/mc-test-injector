@@ -22,9 +22,7 @@ public class TestInjectionTransformer extends MiniMiniTransformer {
 	
 	public static class Hooks {
 		public static void runTestsAndExit() {
-			TestPremain.log.info("Running tests");
 			TestRunner.runTests();
-			TestPremain.log.info("Everything seems to be fine! Forcibly halting the jvm.");
 			Runtime.getRuntime().halt(0);
 		}
 	}

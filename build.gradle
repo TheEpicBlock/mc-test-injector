@@ -43,6 +43,7 @@ repositories {
 			includeGroup 'de.oceanlabs.mcp'
 		}
 	}
+	mavenCentral()
 }
 
 nil {
@@ -70,6 +71,7 @@ dependencies {
 
 	// Normal libraries can be added with the usual "implementation" configuration.
 	implementation("org.spongepowered:mixin:0.8.2")
+	compileOnly 'org.slf4j:slf4j-api:1.7.9'
 }
 
 mappings {
