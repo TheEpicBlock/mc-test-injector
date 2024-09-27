@@ -1,9 +1,7 @@
-package nl.theepicblock.mctestinjector;
+package nl.theepicblock.mctestinjector.support;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -18,6 +16,7 @@ import nilloader.impl.lib.bombe.type.signature.MethodSignature;
 import nilloader.impl.lib.lorenz.MappingSet;
 import nilloader.impl.lib.lorenz.model.ClassMapping;
 import nilloader.impl.lib.lorenz.model.MethodMapping;
+import nl.theepicblock.mctestinjector.TestPremain;
 
 public class MiniMiniTransformer implements ASMTransformer {
     private final LateMappingsDetector mappingsProvider;

@@ -1,9 +1,10 @@
-package nl.theepicblock.mctestinjector;
+package nl.theepicblock.mctestinjector.support;
 
 import nilloader.NilAgent;
 import nilloader.api.lib.asm.tree.MethodNode;
 import nilloader.api.lib.mini.PatchContext;
 import nilloader.impl.lib.lorenz.MappingSet;
+import nl.theepicblock.mctestinjector.TestPremain;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

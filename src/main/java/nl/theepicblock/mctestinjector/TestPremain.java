@@ -1,12 +1,10 @@
 package nl.theepicblock.mctestinjector;
 
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.regex.Pattern;
-
 import nilloader.api.ClassTransformer;
 import nilloader.api.ModRemapper;
 import nilloader.api.NilLogger;
+import nl.theepicblock.mctestinjector.support.AsmTransformerWrapper;
+import nl.theepicblock.mctestinjector.support.LateMappingsDetector;
 
 // All entrypoint classes must implement Runnable.
 public class TestPremain implements Runnable {

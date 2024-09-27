@@ -1,8 +1,6 @@
-package nl.theepicblock.mctestinjector;
+package nl.theepicblock.mctestinjector.support;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -11,6 +9,7 @@ import nilloader.NilAgent;
 import nilloader.api.lib.asm.tree.ClassNode;
 import nilloader.api.lib.asm.tree.MethodNode;
 import nilloader.impl.lib.lorenz.MappingSet;
+import nl.theepicblock.mctestinjector.TestPremain;
 
 public class LateMappingsDetector {
     private Map<String, MappingSet> mappings;

@@ -1,4 +1,4 @@
-package nl.theepicblock.mctestinjector;
+package nl.theepicblock.mctestinjector.support;
 
 import nilloader.api.ASMTransformer;
 import nilloader.api.ClassTransformer;
