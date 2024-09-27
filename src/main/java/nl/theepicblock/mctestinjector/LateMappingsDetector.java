@@ -25,23 +25,22 @@ public class LateMappingsDetector {
 
     public MappingSet detect(ClassNode clazz) {
         if (mapping == null) {
-            TestPremain.log.info("Doing hacky stuff");
             List<String> methodNames = new ArrayList<>();
             for (MethodNode m : clazz.methods) {
                 methodNames.add(m.name);
             }
 
             if (methodNames.contains("initServer")) {
-				TestPremain.log.info("Late-detected mojmap as the runtime mapping");
+				TestPremain.log.debug("Late-detected mojmap as the runtime mapping");
                 mapping = TestPremain.MOJMAP;
 			} else if (anyMatch(methodNames, "method_\\d+")) {
-				TestPremain.log.info("Late-detected intermediary as the runtime mapping");
+				TestPremain.log.debug("Late-detected intermediary as the runtime mapping");
                 mapping = TestPremain.INTERMEDIARY;
 			} else if (anyMatch(methodNames, "m_[a-z]{8}")) {
-                TestPremain.log.info("Late-detected hashed as the runtime mapping");
+                TestPremain.log.debug("Late-detected hashed as the runtime mapping");
                 mapping = TestPremain.HASHED;
             } else if (anyMatch(methodNames, "m_\\d+_")) {
-				TestPremain.log.info("Late-detected srg v2 as the runtime mapping");
+				TestPremain.log.debug("Late-detected srg v2 as the runtime mapping");
                 mapping = TestPremain.SRGV2;
 			}
         }

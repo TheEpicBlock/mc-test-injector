@@ -61,7 +61,7 @@ public class MiniMiniTransformer implements ASMTransformer {
                         .flatMap(cm -> cm.getMethodMapping(sig))
                         .map(MethodMapping::getDeobfuscatedSignature)
                         .orElse(sig);
-                TestPremain.log.info("Trying to inject into {}, which was remapped from {}", method.toJvmsIdentifier(), sig.toJvmsIdentifier());
+                TestPremain.log.debug("Trying to inject into {}, which was remapped from {}", method.toJvmsIdentifier(), sig.toJvmsIdentifier());
 
                 // Try to find the correct method
                 boolean found = false;
