@@ -2,7 +2,6 @@ package nl.theepicblock.mctestinjector.support;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import nilloader.api.ASMTransformer;
@@ -13,16 +12,15 @@ import nilloader.api.lib.asm.tree.MethodNode;
 import nilloader.api.lib.mini.PatchContext;
 import nilloader.api.lib.mini.annotation.Patch;
 import nilloader.impl.lib.bombe.type.signature.MethodSignature;
-import nilloader.impl.lib.lorenz.MappingSet;
-import nilloader.impl.lib.lorenz.model.ClassMapping;
-import nilloader.impl.lib.lorenz.model.MethodMapping;
 import nl.theepicblock.mctestinjector.TestPremain;
+import nl.theepicblock.mctestinjector.support.mappings.LateMappingsDetector;
+import nl.theepicblock.mctestinjector.support.mappings.Mapper;
 
 public class MiniMiniTransformer implements ASMTransformer {
     private final LateMappingsDetector mappingsProvider;
     private final String targetClass;
     private final Set<String> classesToCheck;
-    private MappingSet mappings;
+    private Mapper mappings;
 
     public MiniMiniTransformer(LateMappingsDetector mappingsDetector) {
         this.mappingsProvider = mappingsDetector;
@@ -42,11 +40,7 @@ public class MiniMiniTransformer implements ASMTransformer {
         // Resolve mappings, note that this is done lazily
         // to ensure the mappings detector can inspect the class
         this.mappings = mappingsProvider.detect(clazz);
-        Optional<? extends ClassMapping<?,?>> mapping =  this.mappings.getClassMapping(this.targetClass);
-
-        if (!mapping.isPresent()) {
-            TestPremain.log.warn("No mappings present for {}, no remapping will be done", this.targetClass);
-        }
+        String clazzName =  this.mappings.mapClassname(this.targetClass);
 
         boolean controlFlow = false;
         // Iterate through all our annotations
@@ -56,10 +50,7 @@ public class MiniMiniTransformer implements ASMTransformer {
 
             for (final Patch.Method a : m.getAnnotationsByType(Patch.Method.class)) {
                 MethodSignature sig = MethodSignature.of(a.value());
-                MethodSignature method = mapping
-                        .flatMap(cm -> cm.getMethodMapping(sig))
-                        .map(MethodMapping::getDeobfuscatedSignature)
-                        .orElse(sig);
+                MethodSignature method = mappings.mapMethod(this.targetClass, sig);
                 TestPremain.log.debug("Trying to inject into {}, which was remapped from {}", method.toJvmsIdentifier(), sig.toJvmsIdentifier());
 
                 // Try to find the correct method
@@ -68,7 +59,7 @@ public class MiniMiniTransformer implements ASMTransformer {
                     if (method.equals(MethodSignature.of(methodNode.name, methodNode.desc))) {
                         // Found! Let's inject
                         found = true;
-                        PatchContext ctx = NilHacks.createPatchCtx(methodNode, Optional.of(this.mappings));
+                        PatchContext ctx = NilHacks.createPatchCtx(methodNode, this.mappings.asMappingSet());
                         try {
                             m.invoke(this, ctx);
                         } catch (Exception e) {
@@ -100,13 +91,9 @@ public class MiniMiniTransformer implements ASMTransformer {
     }
     
     protected final MethodInsnNode INVOKESTATIC(String owner, String name, String desc) {
-        Optional<? extends ClassMapping<?,?>> mapping =  this.mappings.getClassMapping(owner);
-        String remappedOwner = mapping.map(cm -> cm.getFullDeobfuscatedName()).orElse(owner);
+        String remappedOwner = this.mappings.mapClassname(owner);
         MethodSignature sig = MethodSignature.of(name, desc);
-        MethodSignature remappedSig = mapping
-                .flatMap(cm -> cm.getMethodMapping(sig))
-                .map(mm -> mm.getDeobfuscatedSignature())
-                .orElse(sig);
+        MethodSignature remappedSig = mappings.mapMethod(owner, sig);
 		return new MethodInsnNode(Opcodes.INVOKESTATIC, remappedOwner, remappedSig.getName(), remappedSig.getDescriptor().toString());
 	}
 }

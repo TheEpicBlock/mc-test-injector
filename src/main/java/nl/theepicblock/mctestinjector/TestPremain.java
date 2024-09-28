@@ -4,7 +4,7 @@ import nilloader.api.ClassTransformer;
 import nilloader.api.ModRemapper;
 import nilloader.api.NilLogger;
 import nl.theepicblock.mctestinjector.support.AsmTransformerWrapper;
-import nl.theepicblock.mctestinjector.support.LateMappingsDetector;
+import nl.theepicblock.mctestinjector.support.mappings.LateMappingsDetector;
 
 // All entrypoint classes must implement Runnable.
 public class TestPremain implements Runnable {
