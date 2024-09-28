@@ -28,39 +28,55 @@ public class LateMappingsDetector {
 
     public Mapper detect(ClassNode clazz) {
         if (mapper == null) {
-            List<String> methodNames = new ArrayList<>();
-            for (MethodNode m : clazz.methods) {
-                methodNames.add(m.name);
-            }
-
-            if (methodNames.contains("initServer")) {
-				TestPremain.log.info("Late-detected mojmap as the runtime mapping");
-                mapper = fromSet(TestPremain.MOJMAP);
-			} else if (false && anyMatch(methodNames, "method_\\d+")) {
-				TestPremain.log.info("Late-detected intermediary as the runtime mapping");
-                mapper = fromSet(TestPremain.INTERMEDIARY);
-			} else if (anyMatch(methodNames, "m_[a-z]{8}")) {
-                TestPremain.log.info("Late-detected hashed as the runtime mapping");
-                mapper = fromSet(TestPremain.HASHED);
-            } else if (anyMatch(methodNames, "m_\\d+_")) {
-				TestPremain.log.info("Late-detected srg v2 as the runtime mapping");
-                mapper = fromSet(TestPremain.SRGV2);
-			} else {
-                try {
-                    Optional<ClassLoader> loader = ClassloadersSuck.findClassloaders()
-                            .filter(cl -> Util.classExists("net.fabricmc.loader.api.FabricLoader", cl))
-                            .findAny();
-                    if (loader.isPresent()) {
-                        ClassLoader mcClassloader = loader.get();
-                        mapper = ClassloadersSuck.run(
-                                mcClassloader,
-                                ClassloadersSuck.get(LateMappingsDetector.class, "getFloaderMapper"),
-                                fromSet(TestPremain.INTERMEDIARY));
-                    }
-                } catch (Throwable ignored) {}
-            }
+            mapper = detectInner(clazz);
         }
         return mapper;
+    }
+
+    private Mapper detectInner(ClassNode clazz) {
+        List<String> methodNames = new ArrayList<>();
+        for (MethodNode m : clazz.methods) {
+            methodNames.add(m.name);
+        }
+
+        if (methodNames.contains("initServer")) {
+            TestPremain.log.info("Late-detected mojmap as the runtime mapping");
+            return fromSet(TestPremain.MOJMAP);
+        }
+
+        if (anyMatch(methodNames, "method_\\d+")) {
+            TestPremain.log.info("Late-detected intermediary as the runtime mapping");
+            return fromSet(TestPremain.INTERMEDIARY);
+        }
+
+        if (anyMatch(methodNames, "m_[a-z]{8}")) {
+            TestPremain.log.info("Late-detected hashed as the runtime mapping");
+            return fromSet(TestPremain.HASHED);
+        }
+
+        if (anyMatch(methodNames, "m_\\d+_")) {
+            TestPremain.log.info("Late-detected srg v2 as the runtime mapping");
+            return fromSet(TestPremain.SRGV2);
+        }
+
+        // Try using floader's api for remapping
+        try {
+            Optional<ClassLoader> loader = ClassloadersSuck.findClassloaders()
+                    .filter(cl -> Util.classExists("net.fabricmc.loader.api.FabricLoader", cl))
+                    .findAny();
+            if (loader.isPresent()) {
+                ClassLoader mcClassloader = loader.get();
+                return ClassloadersSuck.run(
+                        mcClassloader,
+                        ClassloadersSuck.get(LateMappingsDetector.class, "getFloaderMapper"),
+                        fromSet(TestPremain.INTERMEDIARY));
+            }
+        } catch (Throwable t) {
+            TestPremain.log.warn("Exception trying to remap via floader: ", t);
+        }
+
+        // We failed :pensive:
+        return null;
     }
 
     public static Mapper getFloaderMapper(Mapper left) {
