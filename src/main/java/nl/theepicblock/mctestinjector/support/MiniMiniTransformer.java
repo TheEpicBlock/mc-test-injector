@@ -1,14 +1,15 @@
 package nl.theepicblock.mctestinjector.support;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import nilloader.api.ASMTransformer;
 import nilloader.api.lib.asm.Opcodes;
-import nilloader.api.lib.asm.tree.ClassNode;
-import nilloader.api.lib.asm.tree.MethodInsnNode;
-import nilloader.api.lib.asm.tree.MethodNode;
+import nilloader.api.lib.asm.tree.*;
 import nilloader.api.lib.mini.PatchContext;
 import nilloader.api.lib.mini.annotation.Patch;
 import nilloader.impl.lib.bombe.type.signature.MethodSignature;
@@ -21,6 +22,8 @@ public class MiniMiniTransformer implements ASMTransformer {
     private final String targetClass;
     private final Set<String> classesToCheck;
     private Mapper mappings;
+
+    private ClassNode current;
 
     public MiniMiniTransformer(LateMappingsDetector mappingsDetector) {
         this.mappingsProvider = mappingsDetector;
@@ -37,6 +40,7 @@ public class MiniMiniTransformer implements ASMTransformer {
 
     @Override
     public boolean transform(ClassLoader loader, ClassNode clazz) {
+        current = clazz;
         // Resolve mappings, note that this is done lazily
         // to ensure the mappings detector can inspect the class
         this.mappings = mappingsProvider.detect(clazz);
@@ -86,6 +90,7 @@ public class MiniMiniTransformer implements ASMTransformer {
             }
         }
 
+        current = null;
         return controlFlow;
     }
 
@@ -93,11 +98,69 @@ public class MiniMiniTransformer implements ASMTransformer {
     public boolean canTransform(ClassLoader loader, String className) {
         return classesToCheck.contains(className.replace('.', '/'));
     }
-    
-    protected final MethodInsnNode INVOKESTATIC(String owner, String name, String desc) {
-        String remappedOwner = this.mappings.mapClassname(owner);
-        MethodSignature sig = MethodSignature.of(name, desc);
-        MethodSignature remappedSig = mappings.mapMethod(owner, sig);
-		return new MethodInsnNode(Opcodes.INVOKESTATIC, remappedOwner, remappedSig.getName(), remappedSig.getDescriptor().toString());
-	}
+
+    /**
+     * Inserts the equivalent to: {@code ctx.add(INVOKESTATIC(owner, name, desc)},
+     * if you were using {@link nilloader.api.lib.mini.MiniTransformer}.
+     * <p>
+     * This method does have a few notable differences. It will inject a call that does not care
+     * about classloader boundaries. This fixes issues on e.g. NeoForge, but it also means that this
+     * <b>should not be used to invoke methods that aren't part of the nilmod</b>.
+     */
+    protected final void injectInvoke(PatchContext ctx, Class<?> owner, String name) throws IOException {
+        // We spawn a thread.
+        // This threads stores our desired classloader as its context. That's its only function.
+        Thread t = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ignored) {}
+            }
+        });
+        t.setContextClassLoader(owner.getClassLoader());
+        int id = new Random().nextInt();
+        t.setName("mc-test-injector, stupid hacky thread "+id);
+        t.start();
+
+        MethodNode injectorMethod = ClassloadersSuck.getDefinition(ClassloadersSuck.get(MiniMiniTransformer.class, "injectInvokeInner"));
+        injectorMethod.name = "invokerProxy"+id;
+        current.methods.add(injectorMethod);
+
+        ctx.add(
+                new LdcInsnNode(owner.getName()),
+                new LdcInsnNode(name),
+                new LdcInsnNode(id)
+        );
+        ctx.add(
+            new MethodInsnNode(Opcodes.INVOKESTATIC, current.name, injectorMethod.name, injectorMethod.desc)
+        );
+    }
+
+    /**
+     * Never invoked directly. Instead, this method's bytecode is copied over
+     * into the target class.
+     */
+    private static void injectInvokeInner(String clazzName, String name, int id) {
+        Set<Thread> threads = Thread.getAllStackTraces().keySet();
+        Thread found = null;
+        for (Thread t : threads) {
+            if (t.getName().equals("mc-test-injector, stupid hacky thread "+id)) {
+                found = t;
+            }
+        }
+        try {
+            ClassLoader loader = found.getContextClassLoader();
+            Class<?> clazz = loader.loadClass(clazzName);
+            Method f = null;
+            for (Method m : clazz.getDeclaredMethods()) {
+                if (m.getName().equals(name)) {
+                    f = m;
+                }
+            }
+            f.invoke(null);
+            found.stop();
+        } catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

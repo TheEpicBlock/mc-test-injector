@@ -37,6 +37,20 @@ public class ClassloadersSuck {
         return clazz.getClassLoader().getResourceAsStream(clazz.getName().replace(".", "/")+".class");
     }
 
+    public static MethodNode getDefinition(Method m) throws IOException {
+        // Find the class containing our method
+        Class<?> toRunC = m.getDeclaringClass();
+        ClassReader reader = new ClassReader(getClassBytes(toRunC));
+        ClassNode n = new ClassNode();
+        reader.accept(n, 0);
+
+        return n.methods.stream()
+                .filter(mn -> mn.name.equals(m.getName()))
+                .filter(mn -> mn.desc.equals(Type.getMethodDescriptor(m)))
+                .findAny()
+                .orElseThrow(NullPointerException::new);
+    }
+
     public static Method get(Class<?> definer, String name) {
         return Arrays.stream(definer.getDeclaredMethods()).filter(m -> m.getName().equals(name)).findAny().orElseThrow(NullPointerException::new);
     }
@@ -50,17 +64,8 @@ public class ClassloadersSuck {
      */
     public static <T> T run(ClassLoader cl, Method m, Object... ctx) {
         try {
-            // Find the class containing our method
-            Class<?> toRunC = m.getDeclaringClass();
-            ClassReader reader = new ClassReader(getClassBytes(toRunC));
-            ClassNode n = new ClassNode();
-            reader.accept(n, 0);
-
             // Get the bytecode of the method we want to run
-            MethodNode mNode = n.methods.stream()
-                    .filter(mn -> mn.name.equals(m.getName()))
-                    .findAny()
-                    .orElseThrow(NullPointerException::new);
+            MethodNode mNode = getDefinition(m);
             mNode.access |= Opcodes.ACC_PUBLIC;
             mNode.access &= ~Opcodes.ACC_PRIVATE;
             if (!Modifier.isStatic(m.getModifiers())) {

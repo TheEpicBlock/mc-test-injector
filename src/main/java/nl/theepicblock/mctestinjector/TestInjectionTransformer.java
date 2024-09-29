@@ -5,6 +5,8 @@ import nilloader.api.lib.mini.annotation.Patch;
 import nl.theepicblock.mctestinjector.support.mappings.LateMappingsDetector;
 import nl.theepicblock.mctestinjector.support.MiniMiniTransformer;
 
+import java.io.IOException;
+
 @Patch.Class("net.minecraft.server.MinecraftServer")
 public class TestInjectionTransformer extends MiniMiniTransformer {
 	public TestInjectionTransformer(LateMappingsDetector detector) {
@@ -12,12 +14,10 @@ public class TestInjectionTransformer extends MiniMiniTransformer {
 	}
 
 	@Patch.Method("loadLevel()V")
-	public void patchServerStart(PatchContext ctx) {
+	public void patchServerStart(PatchContext ctx) throws IOException {
 		ctx.jumpToStart();
 
-		ctx.add(
-			INVOKESTATIC("nl/theepicblock/mctestinjector/TestInjectionTransformer$Hooks", "runTestsAndExit", "()V")
-		);
+		injectInvoke(ctx, Hooks.class, "runTestsAndExit");
 	}
 	
 	public static class Hooks {
