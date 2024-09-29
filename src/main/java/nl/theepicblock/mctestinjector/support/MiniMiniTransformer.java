@@ -40,6 +40,10 @@ public class MiniMiniTransformer implements ASMTransformer {
         // Resolve mappings, note that this is done lazily
         // to ensure the mappings detector can inspect the class
         this.mappings = mappingsProvider.detect(clazz);
+        if (this.mappings == null) {
+            throw new RuntimeException("No valid mappings were detected. Can't inject");
+        }
+
         String clazzName =  this.mappings.mapClassname(this.targetClass);
 
         boolean controlFlow = false;
