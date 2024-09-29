@@ -40,22 +40,22 @@ public class LateMappingsDetector {
         }
 
         if (methodNames.contains("initServer")) {
-            TestPremain.log.info("Late-detected mojmap as the runtime mapping");
+            TestPremain.log.get().info("Late-detected mojmap as the runtime mapping");
             return fromSet(TestPremain.MOJMAP);
         }
 
         if (anyMatch(methodNames, "method_\\d+")) {
-            TestPremain.log.info("Late-detected intermediary as the runtime mapping");
+            TestPremain.log.get().info("Late-detected intermediary as the runtime mapping");
             return fromSet(TestPremain.INTERMEDIARY);
         }
 
         if (anyMatch(methodNames, "m_[a-z]{8}")) {
-            TestPremain.log.info("Late-detected hashed as the runtime mapping");
+            TestPremain.log.get().info("Late-detected hashed as the runtime mapping");
             return fromSet(TestPremain.HASHED);
         }
 
         if (anyMatch(methodNames, "m_\\d+_")) {
-            TestPremain.log.info("Late-detected srg v2 as the runtime mapping");
+            TestPremain.log.get().info("Late-detected srg v2 as the runtime mapping");
             return fromSet(TestPremain.SRGV2);
         }
 
@@ -72,7 +72,7 @@ public class LateMappingsDetector {
                         fromSet(TestPremain.INTERMEDIARY));
             }
         } catch (Throwable t) {
-            TestPremain.log.warn("Exception trying to remap via floader: ", t);
+            TestPremain.log.get().warn("Exception trying to remap via floader: ", t);
         }
 
         // We failed :pensive:
@@ -80,8 +80,8 @@ public class LateMappingsDetector {
     }
 
     public static Mapper getFloaderMapper(Mapper left) {
-        TestPremain.log.info("Remapping using fabric-loader api via intermediary");
-        TestPremain.log.info("Late-detected {} as the runtime mapping", FloaderMapper.getRuntime());
+        TestPremain.log.get().info("Remapping using fabric-loader api via intermediary");
+        TestPremain.log.get().info("Late-detected {} as the runtime mapping", FloaderMapper.getRuntime());
         return new ChainMapper(left, new FloaderMapper("intermediary"));
     }
 

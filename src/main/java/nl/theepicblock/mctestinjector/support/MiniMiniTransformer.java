@@ -59,7 +59,7 @@ public class MiniMiniTransformer implements ASMTransformer {
             for (final Patch.Method a : m.getAnnotationsByType(Patch.Method.class)) {
                 MethodSignature sig = MethodSignature.of(a.value());
                 MethodSignature method = mappings.mapMethod(this.targetClass, sig);
-                TestPremain.log.debug("Trying to inject into {}, which was remapped from {}", method.toJvmsIdentifier(), sig.toJvmsIdentifier());
+                TestPremain.log.get().debug("Trying to inject into {}, which was remapped from {}", method.toJvmsIdentifier(), sig.toJvmsIdentifier());
 
                 // Try to find the correct method
                 boolean found = false;
@@ -79,12 +79,12 @@ public class MiniMiniTransformer implements ASMTransformer {
                 }
 
                 if (!found && !isOptional) {
-                    TestPremain.log.error(
+                    TestPremain.log.get().error(
                             "{} tried to inject into {}, but it couldn't be found!! The following methods exist:",
                             getClass().getSimpleName(),
                             method.toJvmsIdentifier());
                     for (MethodNode methodNode : clazz.methods) {
-                        TestPremain.log.error("{}{}", methodNode.name, methodNode.desc);
+                        TestPremain.log.get().error("{}{}", methodNode.name, methodNode.desc);
                     }
                 }
             }

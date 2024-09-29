@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.MixinEnvironment;
 
 public class MixinEnvTest {
     public static void doTest() {
-        TestPremain.log.info("Running mixin audit");
+        TestPremain.log.get().info("Running mixin audit");
         MixinEnvironment.getCurrentEnvironment().audit();
     }
 }

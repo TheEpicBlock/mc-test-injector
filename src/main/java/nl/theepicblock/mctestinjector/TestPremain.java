@@ -4,12 +4,13 @@ import nilloader.api.ClassTransformer;
 import nilloader.api.ModRemapper;
 import nilloader.api.NilLogger;
 import nl.theepicblock.mctestinjector.support.AsmTransformerWrapper;
+import nl.theepicblock.mctestinjector.support.LogFinder;
 import nl.theepicblock.mctestinjector.support.mappings.LateMappingsDetector;
 
 // All entrypoint classes must implement Runnable.
 public class TestPremain implements Runnable {
 	public static final String NAME = "mc-test-injector";
-	public static NilLogger log = NilLogger.get(NAME);
+	public static LogFinder log = new LogFinder(NAME);
 
 	// Matches mappings.json
 	public static final String INTERMEDIARY = "net.fabricmc.intermediary-1.20.1";
@@ -19,7 +20,7 @@ public class TestPremain implements Runnable {
 	
 	@Override
 	public void run() {
-		log.info("Initializing mc-test-injector");
+		log.get().info("Initializing mc-test-injector");
 
 		// prevents nilloader from trying to remap
 		// (it can't because of java versions)

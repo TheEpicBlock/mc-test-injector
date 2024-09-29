@@ -23,7 +23,7 @@ public class NilHacks {
             constructor.setAccessible(true);
             return constructor.newInstance(method, mappings);
         } catch (Exception e) {
-            TestPremain.log.error("Failed to reflectively create a patch ctx", e);
+            TestPremain.log.get().error("Failed to reflectively create a patch ctx", e);
             throw new RuntimeException(e);
         }
     }
@@ -38,7 +38,7 @@ public class NilHacks {
             m.setAccessible(true);
             m.invoke(ctx);
         } catch (Exception e) {
-            TestPremain.log.error("Failed to reflectively invoke PatchContext#finish", e);
+            TestPremain.log.get().error("Failed to reflectively invoke PatchContext#finish", e);
             throw new RuntimeException(e);
         }
     }
@@ -56,7 +56,7 @@ public class NilHacks {
 
             return allMappings.get(nilmodid);
         } catch (Exception e) {
-            TestPremain.log.warn("Failed to save mappings from being cleared", e);
+            TestPremain.log.get().warn("Failed to save mappings from being cleared", e);
             throw new RuntimeException(e);
         }
     }

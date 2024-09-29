@@ -8,6 +8,7 @@ import nilloader.api.lib.asm.Type;
 import nilloader.api.lib.asm.tree.*;
 import nl.theepicblock.mctestinjector.TestPremain;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -33,7 +34,7 @@ public class ClassloadersSuck {
         }
     }
 
-    private static InputStream getClassBytes(Class<?> clazz) {
+    public static InputStream getClassBytes(Class<?> clazz) {
         return clazz.getClassLoader().getResourceAsStream(clazz.getName().replace(".", "/")+".class");
     }
 
@@ -59,49 +60,55 @@ public class ClassloadersSuck {
      * Runs a method in the context of a certain classloader.
      * @param cl The classloader to run the method in
      * @param m The method to run
-     * @param ctx parameters for the method
+     * @param args parameters for the method
      * @return
      */
-    public static <T> T run(ClassLoader cl, Method m, Object... ctx) {
+    public static <T> T run(ClassLoader cl, Method m, Object... args) {
         try {
-            // Get the bytecode of the method we want to run
-            MethodNode mNode = getDefinition(m);
-            mNode.access |= Opcodes.ACC_PUBLIC;
-            mNode.access &= ~Opcodes.ACC_PRIVATE;
-            if (!Modifier.isStatic(m.getModifiers())) {
-                throw new IllegalArgumentException();
-            }
-
-            // Create a new class containing a copy of that method
-            ClassNode runnerDefinition = new ClassNode();
-            runnerDefinition.version = Opcodes.V1_8;
-            runnerDefinition.access = Opcodes.ACC_PUBLIC;
-            runnerDefinition.name = "nl/theepicblock/HackClass";
-            runnerDefinition.superName = "java/lang/Object";
-
-            runnerDefinition.methods.add(mNode);
-
             // Create a classloader as a child of the loader we want to inject in to
             // and load our runner class in there
             InjectableClassloader ncl = new InjectableClassloader(cl);
-            Class<?> runner = ncl.injectClass(runnerDefinition);
+            Method runner = createCopyOfMethod(ncl, m);
 
             // Proxy objects if needed, so that the types are compatible in our target loader
-            Object[] proxiedObjects = new Object[ctx.length];
-            for (int i = 0; i < ctx.length; i++) {
-                proxiedObjects[i] = proxy(ctx[i], ncl.loadClass(m.getParameterTypes()[i].getName()));
+            Object[] proxiedObjects = new Object[args.length];
+            for (int i = 0; i < args.length; i++) {
+                proxiedObjects[i] = proxy(args[i], ncl.loadClass(m.getParameterTypes()[i].getName()));
             }
 
             // Run the method
-            Object result = runner.getMethods()[0].invoke(null, proxiedObjects);
+            Object result = runner.invoke(null, proxiedObjects);
 
             // Return the result, proxied if needed so it's compatible with our current loader
             return (T)proxy(result, m.getReturnType());
         } catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException |
                  IOException e) {
-            TestPremain.log.warn("a",e.getCause());
+            TestPremain.log.get().warn("a",e.getCause());
             throw new RuntimeException(e);
         }
+    }
+
+    public static Method createCopyOfMethod(InjectableClassloader l, Method m) throws IOException {
+        // Get the bytecode of the method we want to run
+        MethodNode mNode = getDefinition(m);
+        mNode.access |= Opcodes.ACC_PUBLIC;
+        mNode.access &= ~Opcodes.ACC_PRIVATE;
+        if (!Modifier.isStatic(m.getModifiers())) {
+            throw new IllegalArgumentException();
+        }
+
+        // Create a new class containing a copy of that method
+        ClassNode runnerDefinition = new ClassNode();
+        runnerDefinition.version = Opcodes.V1_8;
+        runnerDefinition.access = Opcodes.ACC_PUBLIC;
+        runnerDefinition.name = "nl/theepicblock/HackClass";
+        runnerDefinition.superName = "java/lang/Object";
+
+        runnerDefinition.methods.add(mNode);
+
+        Class<?> runner = l.injectClass(runnerDefinition);
+
+        return runner.getMethods()[0];
     }
 
     public static <T> T proxy(Object o, Class<T> targetInterface) {
@@ -180,7 +187,7 @@ public class ClassloadersSuck {
         return clazz;
     }
 
-    private static class InjectableClassloader extends ClassLoader {
+    public static class InjectableClassloader extends ClassLoader {
         protected InjectableClassloader(ClassLoader parent) {
             super(parent);
         }
@@ -189,6 +196,20 @@ public class ClassloadersSuck {
             ClassWriter writer = new NonLoadingClassWriter(this, ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
             clazz.accept(writer);
             return injectClass(clazz.name.replace("/", "."), writer.toByteArray());
+        }
+
+        public Class<?> injectClass(Class<?> clazz) throws IOException {
+            InputStream classStream = getClassBytes(clazz);
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+            int nRead;
+            byte[] data = new byte[16384];
+
+            while ((nRead = classStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+
+            return this.defineClass(clazz.getName(), buffer.toByteArray(), 0, buffer.size());
         }
 
         public Class<?> injectClass(String name, byte[] bytecode) {
