@@ -112,6 +112,9 @@ public class ClassloadersSuck {
     }
 
     public static <T> T proxy(Object o, Class<T> targetInterface) {
+        if (o == null) {
+            return null;
+        }
         if (targetInterface.isAssignableFrom(o.getClass())) {
             // It's already fine
             return (T)o;
@@ -199,7 +202,10 @@ public class ClassloadersSuck {
         }
 
         public Class<?> injectClass(Class<?> clazz) throws IOException {
-            InputStream classStream = getClassBytes(clazz);
+            return injectClass(clazz.getName(), getClassBytes(clazz));
+        }
+
+        public Class<?> injectClass(String name, InputStream classStream) throws IOException {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
             int nRead;
@@ -209,11 +215,59 @@ public class ClassloadersSuck {
                 buffer.write(data, 0, nRead);
             }
 
-            return this.defineClass(clazz.getName(), buffer.toByteArray(), 0, buffer.size());
+            return this.defineClass(name, buffer.toByteArray(), 0, buffer.size());
         }
 
         public Class<?> injectClass(String name, byte[] bytecode) {
             return this.defineClass(name, bytecode, 0, bytecode.length);
+        }
+    }
+
+    public static class MultiParentClassLoader extends InjectableClassloader {
+        private final ClassLoader[] parents;
+
+        public MultiParentClassLoader(ClassLoader[] parents) {
+            super(null);
+            this.parents = parents;
+        }
+
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            synchronized (getClassLoadingLock(name)) {
+                // First, check if the class has already been loaded
+                Class<?> c = findLoadedClass(name);
+                if (c == null) {
+                    if (name.startsWith("nilloader.") || name.startsWith("nl.theepicblock.mctestinjector")) {
+                        // Redefine these classes
+                        for (ClassLoader parent : parents) {
+                            InputStream str = parent.getResourceAsStream(name.replace(".", "/")+".class");
+                            if (str != null) {
+                                try {
+                                    c = this.injectClass(name, str);
+                                    break;
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                        }
+                    } else {
+                        for (ClassLoader parent : parents) {
+                            if (parent == null) continue;
+                            try {
+                                c = parent.loadClass(name);
+                                break;
+                            } catch (ClassNotFoundException e) {
+                                // ClassNotFoundException thrown if class not found
+                                // from the non-null parent class loader
+                            }
+                        }
+                    }
+                }
+                if (resolve) {
+                    resolveClass(c);
+                }
+                return c;
+            }
         }
     }
 }

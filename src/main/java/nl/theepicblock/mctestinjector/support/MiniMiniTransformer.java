@@ -8,6 +8,7 @@ import java.util.Random;
 import java.util.Set;
 
 import nilloader.api.ASMTransformer;
+import nilloader.api.NilLoader;
 import nilloader.api.lib.asm.Opcodes;
 import nilloader.api.lib.asm.tree.*;
 import nilloader.api.lib.mini.PatchContext;
@@ -117,7 +118,7 @@ public class MiniMiniTransformer implements ASMTransformer {
                 } catch (InterruptedException ignored) {}
             }
         });
-        t.setContextClassLoader(owner.getClassLoader());
+        t.setContextClassLoader(this.getClass().getClassLoader());
         int id = new Random().nextInt();
         t.setName("mc-test-injector, stupid hacky thread "+id);
         t.start();
@@ -127,6 +128,7 @@ public class MiniMiniTransformer implements ASMTransformer {
         current.methods.add(injectorMethod);
 
         ctx.add(
+                new LdcInsnNode(current.name.replace("/", ".")),
                 new LdcInsnNode(owner.getName()),
                 new LdcInsnNode(name),
                 new LdcInsnNode(id)
@@ -140,7 +142,7 @@ public class MiniMiniTransformer implements ASMTransformer {
      * Never invoked directly. Instead, this method's bytecode is copied over
      * into the target class.
      */
-    private static void injectInvokeInner(String clazzName, String name, int id) {
+    private static void injectInvokeInner(String selfName, String clazzName, String name, int id) {
         Set<Thread> threads = Thread.getAllStackTraces().keySet();
         Thread found = null;
         for (Thread t : threads) {
@@ -150,15 +152,34 @@ public class MiniMiniTransformer implements ASMTransformer {
         }
         try {
             ClassLoader loader = found.getContextClassLoader();
-            Class<?> clazz = loader.loadClass(clazzName);
+            Class<?> clazz = loader.loadClass("nl.theepicblock.mctestinjector.support.MiniMiniTransformer");
             Method f = null;
             for (Method m : clazz.getDeclaredMethods()) {
-                if (m.getName().equals(name)) {
+                if (m.getName().equals("bootstrapAndRun")) {
                     f = m;
                 }
             }
-            f.invoke(null);
+            ClassLoader selfLoader = Class.forName(selfName).getClassLoader();
+            f.invoke(null, selfLoader, clazzName, name);
             found.stop();
+        } catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Never invoked directly, invoked by injectInvokeInner
+     */
+    public static void bootstrapAndRun(ClassLoader l, String clazzName, String name) {
+        ClassLoader cl = new ClassloadersSuck.MultiParentClassLoader(new ClassLoader[] {
+                MiniMiniTransformer.class.getClassLoader(),
+                NilLoader.class.getClassLoader(),
+                l
+        });
+        try {
+            Class<?> clazz = cl.loadClass(clazzName);
+            Method m = ClassloadersSuck.get(clazz, name);
+            m.invoke(null);
         } catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
