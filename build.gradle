@@ -9,7 +9,7 @@ targetCompatibility = JavaVersion.VERSION_1_8
 
 group = 'nl.theepicblock'
 archivesBaseName = 'McTestInjector'
-version = '0.0.1'
+version = '1.0.0'
 
 repositories {
 	maven {
