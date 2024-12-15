@@ -76,11 +76,11 @@ dependencies {
 }
 
 mappings {
-	work nil.mojmap('1.20.1', 'server')
+	work nil.mojmap('1.20.1', 'client')
 
 	target 'net.fabricmc:intermediary:1.20.1:v2' // For fabric
 	target 'org.quiltmc:hashed:1.20.1' // Quilt still uses intermediary, but just in case
-	target nil.mojmap('1.20.1', 'server') // For NeoForge (which uses mojmap at runtime)
+	target nil.mojmap('1.20.1', 'client') // For NeoForge (which uses mojmap at runtime)
 	target 'de.oceanlabs.mcp:mcp_config:1.20.1' // If we use something in srg v2 for some reason
 	// target nil.mcpArchiveSrg('1.4.7', '726a')
 }

@@ -8,8 +8,8 @@ import nl.theepicblock.mctestinjector.support.MiniMiniTransformer;
 import java.io.IOException;
 
 @Patch.Class("net.minecraft.server.MinecraftServer")
-public class TestInjectionTransformer extends MiniMiniTransformer {
-	public TestInjectionTransformer(LateMappingsDetector detector) {
+public class ServerTestInjector extends MiniMiniTransformer {
+	public ServerTestInjector(LateMappingsDetector detector) {
 		super(detector);
 	}
 

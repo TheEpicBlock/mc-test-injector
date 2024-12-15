@@ -2,7 +2,6 @@ package nl.theepicblock.mctestinjector;
 
 import nilloader.api.ClassTransformer;
 import nilloader.api.ModRemapper;
-import nilloader.api.NilLogger;
 import nl.theepicblock.mctestinjector.support.AsmTransformerWrapper;
 import nl.theepicblock.mctestinjector.support.LogFinder;
 import nl.theepicblock.mctestinjector.support.mappings.LateMappingsDetector;
@@ -27,6 +26,7 @@ public class TestPremain implements Runnable {
 		ModRemapper.setTargetMapping("bogus");
 
 		LateMappingsDetector detector = new LateMappingsDetector();
-		ClassTransformer.register(new AsmTransformerWrapper(new TestInjectionTransformer(detector)));
+		ClassTransformer.register(new AsmTransformerWrapper(new ServerTestInjector(detector)));
+		ClassTransformer.register(new AsmTransformerWrapper(new ClientTestInjector(detector)));
 	}
 }
